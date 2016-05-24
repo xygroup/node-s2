@@ -1,6 +1,6 @@
 #include <node.h>
 #include <nan.h>
-#include "node_object_wrap.h"           // for ObjectWrap
+#include "node_object_wrap.h"           // for Nan::ObjectWrap
 #include "v8.h"                         // for Handle, String, Integer, etc
 
 #include "angle.h"
@@ -21,10 +21,10 @@
 
 using namespace v8;
 
-Persistent<FunctionTemplate> Polyline::constructor;
+Nan::Persistent<FunctionTemplate> Polyline::constructor;
 
 void Polyline::Init(Handle<Object> target) {
-    NanScope();
+    Nan::HandleScope scope;
 
     constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Polyline::New));
     Local<String> name = String::NewSymbol("S2Polyline");
@@ -32,73 +32,73 @@ void Polyline::Init(Handle<Object> target) {
     constructor->InstanceTemplate()->SetInternalFieldCount(1);
     constructor->SetClassName(name);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getCapBound", GetCapBound);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getLength", GetLength);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getCentroid", GetCentroid);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "interpolate", Interpolate);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getSuffix", GetSuffix);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "intersects", Intersects);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "reverse", Reverse);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "approxEquals", ApproxEquals);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "nearlyCoversPolyline", NearlyCoversPolyline);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getRectBound", GetRectBound);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "contains", Contains);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "size", Size);
+    Nan::SetPrototypeMethod(constructor, "getCapBound", GetCapBound);
+    Nan::SetPrototypeMethod(constructor, "getLength", GetLength);
+    Nan::SetPrototypeMethod(constructor, "getCentroid", GetCentroid);
+    Nan::SetPrototypeMethod(constructor, "interpolate", Interpolate);
+    Nan::SetPrototypeMethod(constructor, "getSuffix", GetSuffix);
+    Nan::SetPrototypeMethod(constructor, "intersects", Intersects);
+    Nan::SetPrototypeMethod(constructor, "reverse", Reverse);
+    Nan::SetPrototypeMethod(constructor, "approxEquals", ApproxEquals);
+    Nan::SetPrototypeMethod(constructor, "nearlyCoversPolyline", NearlyCoversPolyline);
+    Nan::SetPrototypeMethod(constructor, "getRectBound", GetRectBound);
+    Nan::SetPrototypeMethod(constructor, "contains", Contains);
+    Nan::SetPrototypeMethod(constructor, "size", Size);
 
     target->Set(name, constructor->GetFunction());
 }
 
 Polyline::Polyline()
-    : ObjectWrap(),
+    : Nan::ObjectWrap(),
       this_() {}
 
 Handle<Value> Polyline::New(const Arguments& args) {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (!args.IsConstructCall()) {
-        return NanThrowError("Use the new operator to create instances of this object.");
+    if (!info.IsConstructCall()) {
+        return Nan::ThrowError("Use the new operator to create instances of this object.");
     }
 
-    if (args[0]->IsExternal()) {
-        Local<External> ext = Local<External>::Cast(args[0]);
+    if (info[0]->IsExternal()) {
+        Local<External> ext = Local<External>::Cast(info[0]);
         void* ptr = ext->Value();
         Polyline* ll = static_cast<Polyline*>(ptr);
-        ll->Wrap(args.This());
-        return args.This();
+        ll->Wrap(info.This());
+        return info.This();
     }
 
-    if (args.Length() != 1) {
-        return NanThrowError("array<LatLng> required");
+    if (info.Length() != 1) {
+        return Nan::ThrowError("array<LatLng> required");
     }
 
-    if (!args[0]->IsArray()) {
-       return NanThrowError("array<LatLng> required");
+    if (!info[0]->IsArray()) {
+       return Nan::ThrowError("array<LatLng> required");
     }
 
     // unwrap array into std::vector
-    v8::Handle<v8::Array> array = v8::Handle<v8::Array>::Cast(args[0]);
+    v8::Handle<v8::Array> array = v8::Handle<v8::Array>::Cast(info[0]);
     std::vector<S2LatLng> coordinate_vector;
     for (unsigned i = 0; i < array->Length(); i++) {
         v8::Handle<v8::Value> value = array->Get(i);
         if (value->IsUndefined() || value->IsNull()) {
-            return NanThrowError("array entry undefined");
+            return Nan::ThrowError("array entry undefined");
         }
-        LatLng* ll = node::ObjectWrap::Unwrap<LatLng>(value->ToObject());
+        LatLng* ll = Nan::ObjectWrap::Unwrap<LatLng>(value->ToObject());
         coordinate_vector.emplace_back(ll->get());
         // TODO: complete
 
         // std::cout << "[" << i << "] " << coordinate_vector.at(i).lat() << "," << coordinate_vector.at(i).lng() << std::endl;
     }
     Polyline* obj = new Polyline();
-    obj->Wrap(args.This());
+    obj->Wrap(info.This());
 
     // pass std::vector<S2LatLng> to c'tor
     obj->this_ = S2Polyline(coordinate_vector);
-    return args.This();
+    return info.This();
 }
 
 Handle<Value> Polyline::New(S2Polyline s2cap) {
-    NanScope();
+    Nan::HandleScope scope;
     Polyline* obj = new Polyline();
     obj->this_ = s2cap;
     Handle<Value> ext = External::New(obj);
@@ -107,83 +107,83 @@ Handle<Value> Polyline::New(S2Polyline s2cap) {
 }
 
 NAN_METHOD(Polyline::GetCapBound) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    NanReturnValue(Cap::New(polyline->this_.GetCapBound()));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    info.GetReturnValue().Set(Cap::New(polyline->this_.GetCapBound()));
 }
 
 NAN_METHOD(Polyline::GetLength) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    NanReturnValue(Angle::New(polyline->this_.GetLength()));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    info.GetReturnValue().Set(Angle::New(polyline->this_.GetLength()));
 }
 
 NAN_METHOD(Polyline::GetCentroid) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    NanReturnValue(Point::New(polyline->this_.GetCentroid()));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    info.GetReturnValue().Set(Point::New(polyline->this_.GetCentroid()));
 }
 
 NAN_METHOD(Polyline::Interpolate) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    NanReturnValue(Point::New(polyline->this_.Interpolate(args[0]->ToNumber()->Value())));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    info.GetReturnValue().Set(Point::New(polyline->this_.Interpolate(info[0]->ToNumber()->Value())));
 }
 
 NAN_METHOD(Polyline::GetSuffix) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    int next_vertex = args[1]->ToInteger()->Value();
-    NanReturnValue(Point::New(polyline->this_.GetSuffix(args[0]->ToNumber()->Value(),
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    int next_vertex = info[1]->ToInteger()->Value();
+    info.GetReturnValue().Set(Point::New(polyline->this_.GetSuffix(info[0]->ToNumber()->Value(),
                                                           &next_vertex)));
     // TODO: set argv[1] to next_vertex
 }
 
 NAN_METHOD(Polyline::Intersects) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    S2Polyline other = node::ObjectWrap::Unwrap<Polyline>(args[0]->ToObject())->get();
-    NanReturnValue(NanNew<Boolean>(polyline->this_.Intersects(&other)));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    S2Polyline other = Nan::ObjectWrap::Unwrap<Polyline>(info[0]->ToObject())->get();
+    info.GetReturnValue().Set(Nan::New<Boolean>(polyline->this_.Intersects(&other)));
 }
 
 NAN_METHOD(Polyline::Reverse) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
     polyline->this_.Reverse();
-    NanReturnUndefined();
+    return;
 }
 
 NAN_METHOD(Polyline::ApproxEquals) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    S2Polyline other = node::ObjectWrap::Unwrap<Polyline>(args[0]->ToObject())->get();
-    double max_error = args[1]->ToNumber()->Value();
-    NanReturnValue(NanNew<Boolean>(polyline->this_.ApproxEquals(&other, max_error)));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    S2Polyline other = Nan::ObjectWrap::Unwrap<Polyline>(info[0]->ToObject())->get();
+    double max_error = info[1]->ToNumber()->Value();
+    info.GetReturnValue().Set(Nan::New<Boolean>(polyline->this_.ApproxEquals(&other, max_error)));
 }
 
 NAN_METHOD(Polyline::NearlyCoversPolyline) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    S2Polyline other = node::ObjectWrap::Unwrap<Polyline>(args[0]->ToObject())->get();
-    S1Angle max_error =  node::ObjectWrap::Unwrap<Angle>(args[0]->ToObject())->get();
-    NanReturnValue(NanNew<Boolean>(polyline->this_.NearlyCoversPolyline(other, max_error)));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    S2Polyline other = Nan::ObjectWrap::Unwrap<Polyline>(info[0]->ToObject())->get();
+    S1Angle max_error =  Nan::ObjectWrap::Unwrap<Angle>(info[0]->ToObject())->get();
+    info.GetReturnValue().Set(Nan::New<Boolean>(polyline->this_.NearlyCoversPolyline(other, max_error)));
 }
 
 NAN_METHOD(Polyline::GetRectBound) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    NanReturnValue(LatLngRect::New(polyline->this_.GetRectBound()));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    info.GetReturnValue().Set(LatLngRect::New(polyline->this_.GetRectBound()));
 }
 
 NAN_METHOD(Polyline::Contains) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    S2Cell other = node::ObjectWrap::Unwrap<Cell>(args[0]->ToObject())->get();
-    NanReturnValue(NanNew<Boolean>(polyline->this_.Contains(other)));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    S2Cell other = Nan::ObjectWrap::Unwrap<Cell>(info[0]->ToObject())->get();
+    info.GetReturnValue().Set(Nan::New<Boolean>(polyline->this_.Contains(other)));
 }
 
 NAN_METHOD(Polyline::Size) {
-    NanScope();
-    Polyline* polyline = node::ObjectWrap::Unwrap<Polyline>(args.This());
-    NanReturnValue(NanNew<Integer>(polyline->this_.num_vertices()));
+    Nan::HandleScope scope;
+    Polyline* polyline = Nan::ObjectWrap::Unwrap<Polyline>(info.This());
+    info.GetReturnValue().Set(Nan::New<Integer>(polyline->this_.num_vertices()));
 }

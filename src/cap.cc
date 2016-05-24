@@ -1,6 +1,6 @@
 #include <node.h>
 #include <nan.h>
-#include "node_object_wrap.h"           // for ObjectWrap
+#include "node_object_wrap.h"           // for Nan::ObjectWrap
 #include "v8.h"                         // for Handle, String, Integer, etc
 
 #include "s2.h"
@@ -12,10 +12,10 @@
 
 using namespace v8;
 
-Persistent<FunctionTemplate> Cap::constructor;
+Nan::Persistent<FunctionTemplate> Cap::constructor;
 
 void Cap::Init(Handle<Object> target) {
-    NanScope();
+    Nan::HandleScope scope;
 
     constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Cap::New));
     Local<String> name = String::NewSymbol("S2Cap");
@@ -23,55 +23,55 @@ void Cap::Init(Handle<Object> target) {
     constructor->InstanceTemplate()->SetInternalFieldCount(1);
     constructor->SetClassName(name);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getRectBound", GetRectBound);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "intersects", Intersects);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "interiorIntersects", InteriorIntersects);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "contains", Contains);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "complement", Complement);
+    Nan::SetPrototypeMethod(constructor, "getRectBound", GetRectBound);
+    Nan::SetPrototypeMethod(constructor, "intersects", Intersects);
+    Nan::SetPrototypeMethod(constructor, "interiorIntersects", InteriorIntersects);
+    Nan::SetPrototypeMethod(constructor, "contains", Contains);
+    Nan::SetPrototypeMethod(constructor, "complement", Complement);
 
     target->Set(name, constructor->GetFunction());
 }
 
 Cap::Cap()
-    : ObjectWrap(),
+    : Nan::ObjectWrap(),
       this_() {}
 
 Handle<Value> Cap::New(const Arguments& args) {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (!args.IsConstructCall()) {
-        return NanThrowError("Use the new operator to create instances of this object.");
+    if (!info.IsConstructCall()) {
+        return Nan::ThrowError("Use the new operator to create instances of this object.");
     }
 
-    if (args[0]->IsExternal()) {
-        Local<External> ext = Local<External>::Cast(args[0]);
+    if (info[0]->IsExternal()) {
+        Local<External> ext = Local<External>::Cast(info[0]);
         void* ptr = ext->Value();
         Cap* ll = static_cast<Cap*>(ptr);
-        ll->Wrap(args.This());
-        return args.This();
+        ll->Wrap(info.This());
+        return info.This();
     }
 
     Cap* obj = new Cap();
 
-    obj->Wrap(args.This());
+    obj->Wrap(info.This());
 
-    if (args.Length() == 2 && args[1]->IsNumber()) {
-        Handle<Object> fromObj = args[0]->ToObject();
-        if (NanHasInstance(Point::constructor, fromObj)) {
-            S2Point p = node::ObjectWrap::Unwrap<Point>(fromObj)->get();
-            obj->this_ = S2Cap::FromAxisHeight(p, args[1]->ToNumber()->Value());
+    if (info.Length() == 2 && info[1]->IsNumber()) {
+        Handle<Object> fromObj = info[0]->ToObject();
+        if (Nan::New(Point::constructor)->HasInstance( fromObj)) {
+            S2Point p = Nan::ObjectWrap::Unwrap<Point>(fromObj)->get();
+            obj->this_ = S2Cap::FromAxisHeight(p, info[1]->ToNumber()->Value());
         } else {
-            return NanThrowError("S2Cap requires arguments (S2Point, number)");
+            return Nan::ThrowError("S2Cap requires arguments (S2Point, number)");
         }
     } else {
-        return NanThrowError("S2Cap requires arguments (S2Point, number)");
+        return Nan::ThrowError("S2Cap requires arguments (S2Point, number)");
     }
 
-    return args.This();
+    return info.This();
 }
 
 Handle<Value> Cap::New(S2Cap s2cap) {
-    NanScope();
+    Nan::HandleScope scope;
     Cap* obj = new Cap();
     obj->this_ = s2cap;
     Handle<Value> ext = External::New(obj);
@@ -80,34 +80,34 @@ Handle<Value> Cap::New(S2Cap s2cap) {
 }
 
 NAN_METHOD(Cap::GetRectBound) {
-    NanScope();
-    Cap* cap = node::ObjectWrap::Unwrap<Cap>(args.This());
-    NanReturnValue(LatLngRect::New(cap->this_.GetRectBound()));
+    Nan::HandleScope scope;
+    Cap* cap = Nan::ObjectWrap::Unwrap<Cap>(info.This());
+    info.GetReturnValue().Set(LatLngRect::New(cap->this_.GetRectBound()));
 }
 
 NAN_METHOD(Cap::Intersects) {
-    NanScope();
-    Cap* cap = node::ObjectWrap::Unwrap<Cap>(args.This());
-    S2Cap other = node::ObjectWrap::Unwrap<Cap>(args[0]->ToObject())->get();
-    NanReturnValue(NanNew<Boolean>(cap->this_.Intersects(other)));
+    Nan::HandleScope scope;
+    Cap* cap = Nan::ObjectWrap::Unwrap<Cap>(info.This());
+    S2Cap other = Nan::ObjectWrap::Unwrap<Cap>(info[0]->ToObject())->get();
+    info.GetReturnValue().Set(Nan::New<Boolean>(cap->this_.Intersects(other)));
 }
 
 NAN_METHOD(Cap::InteriorIntersects) {
-    NanScope();
-    Cap* cap = node::ObjectWrap::Unwrap<Cap>(args.This());
-    S2Cap other = node::ObjectWrap::Unwrap<Cap>(args[0]->ToObject())->get();
-    NanReturnValue(NanNew<Boolean>(cap->this_.Intersects(other)));
+    Nan::HandleScope scope;
+    Cap* cap = Nan::ObjectWrap::Unwrap<Cap>(info.This());
+    S2Cap other = Nan::ObjectWrap::Unwrap<Cap>(info[0]->ToObject())->get();
+    info.GetReturnValue().Set(Nan::New<Boolean>(cap->this_.Intersects(other)));
 }
 
 NAN_METHOD(Cap::Contains) {
-    NanScope();
-    Cap* cap = node::ObjectWrap::Unwrap<Cap>(args.This());
-    S2Cap other = node::ObjectWrap::Unwrap<Cap>(args[0]->ToObject())->get();
-    NanReturnValue(NanNew<Boolean>(cap->this_.Contains(other)));
+    Nan::HandleScope scope;
+    Cap* cap = Nan::ObjectWrap::Unwrap<Cap>(info.This());
+    S2Cap other = Nan::ObjectWrap::Unwrap<Cap>(info[0]->ToObject())->get();
+    info.GetReturnValue().Set(Nan::New<Boolean>(cap->this_.Contains(other)));
 }
 
 NAN_METHOD(Cap::Complement) {
-    NanScope();
-    Cap* cap = node::ObjectWrap::Unwrap<Cap>(args.This());
-    NanReturnValue(Cap::New(cap->this_.Complement()));
+    Nan::HandleScope scope;
+    Cap* cap = Nan::ObjectWrap::Unwrap<Cap>(info.This());
+    info.GetReturnValue().Set(Cap::New(cap->this_.Complement()));
 }

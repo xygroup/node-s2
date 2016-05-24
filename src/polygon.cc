@@ -1,6 +1,6 @@
 #include <node.h>
 #include <nan.h>
-#include "node_object_wrap.h"           // for ObjectWrap
+#include "node_object_wrap.h"           // for Nan::ObjectWrap
 #include "v8.h"                         // for Handle, String, Integer, etc
 
 #include "s2.h"
@@ -17,10 +17,10 @@
 
 using namespace v8;
 
-Persistent<FunctionTemplate> Polygon::constructor;
+Nan::Persistent<FunctionTemplate> Polygon::constructor;
 
 void Polygon::Init(Handle<Object> target) {
-    NanScope();
+    Nan::HandleScope scope;
 
     constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Polygon::New));
     Local<String> name = String::NewSymbol("S2Polygon");
@@ -28,41 +28,41 @@ void Polygon::Init(Handle<Object> target) {
     constructor->InstanceTemplate()->SetInternalFieldCount(1);
     constructor->SetClassName(name);
 
-    // NODE_SET_PROTOTYPE_METHOD(constructor, "approxArea", ApproxArea);
+    // Nan::SetPrototypeMethod(constructor, "approxArea", ApproxArea);
 
     target->Set(name, constructor->GetFunction());
 }
 
 Polygon::Polygon()
-    : ObjectWrap() {}
+    : Nan::ObjectWrap() {}
 
 Handle<Value> Polygon::New(const Arguments& args) {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (!args.IsConstructCall()) {
-        return NanThrowError("Use the new operator to create instances of this object.");
+    if (!info.IsConstructCall()) {
+        return Nan::ThrowError("Use the new operator to create instances of this object.");
     }
 
-    if (args[0]->IsExternal()) {
-        Local<External> ext = Local<External>::Cast(args[0]);
+    if (info[0]->IsExternal()) {
+        Local<External> ext = Local<External>::Cast(info[0]);
         void* ptr = ext->Value();
         Polygon* ll = static_cast<Polygon*>(ptr);
-        ll->Wrap(args.This());
-        return args.This();
+        ll->Wrap(info.This());
+        return info.This();
     }
 
-    if (args.Length() != 1) {
-        return NanThrowError("(latlng) required");
+    if (info.Length() != 1) {
+        return Nan::ThrowError("(latlng) required");
     }
 
     Polygon* obj = new Polygon();
-    obj->Wrap(args.This());
+    obj->Wrap(info.This());
 
-    return args.This();
+    return info.This();
 }
 
 // NAN_METHOD(Polygon::ApproxArea) {
-//     NanScope();
-//     Polygon* obj = ObjectWrap::Unwrap<Polygon>(args.This());
-//     NanReturnValue(NanNew<Number>(obj->this_.ApproxArea()));
+//     Nan::HandleScope scope;
+//     Polygon* obj = Nan::ObjectWrap::Unwrap<Polygon>(info.This());
+//     info.GetReturnValue().Set(Nan::New<Number>(obj->this_.ApproxArea()));
 // }

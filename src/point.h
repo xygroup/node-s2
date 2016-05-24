@@ -5,7 +5,7 @@
 #include <nan.h>
 #include "s2.h"
 
-class Point : public node::ObjectWrap {
+class Point : public Nan::ObjectWrap {
 public:
     static v8::Persistent<v8::FunctionTemplate> constructor;
     static void Init(v8::Handle<v8::Object> target);

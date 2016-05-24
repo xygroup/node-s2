@@ -1,6 +1,6 @@
 #include <node.h>
 #include <nan.h>
-#include "node_object_wrap.h"           // for ObjectWrap
+#include "node_object_wrap.h"           // for Nan::ObjectWrap
 #include "v8.h"                         // for Handle, String, Integer, etc
 
 #include "s2.h"
@@ -15,10 +15,10 @@
 
 using namespace v8;
 
-Persistent<FunctionTemplate> Cell::constructor;
+Nan::Persistent<FunctionTemplate> Cell::constructor;
 
 void Cell::Init(Handle<Object> target) {
-    NanScope();
+    Nan::HandleScope scope;
 
     constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Cell::New));
     Local<String> name = String::NewSymbol("S2Cell");
@@ -26,65 +26,65 @@ void Cell::Init(Handle<Object> target) {
     constructor->InstanceTemplate()->SetInternalFieldCount(1);
     constructor->SetClassName(name);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor, "approxArea", ApproxArea);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "exactArea", ExactArea);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "averageArea", AverageArea);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "face", Face);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "level", Level);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "orientation", Orientation);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "isLeaf", IsLeaf);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getCapBound", GetCapBound);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getVertex", GetVertex);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "getCenter", GetCenter);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "id", Id);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "toString", ToString);
+    Nan::SetPrototypeMethod(constructor, "approxArea", ApproxArea);
+    Nan::SetPrototypeMethod(constructor, "exactArea", ExactArea);
+    Nan::SetPrototypeMethod(constructor, "averageArea", AverageArea);
+    Nan::SetPrototypeMethod(constructor, "face", Face);
+    Nan::SetPrototypeMethod(constructor, "level", Level);
+    Nan::SetPrototypeMethod(constructor, "orientation", Orientation);
+    Nan::SetPrototypeMethod(constructor, "isLeaf", IsLeaf);
+    Nan::SetPrototypeMethod(constructor, "getCapBound", GetCapBound);
+    Nan::SetPrototypeMethod(constructor, "getVertex", GetVertex);
+    Nan::SetPrototypeMethod(constructor, "getCenter", GetCenter);
+    Nan::SetPrototypeMethod(constructor, "id", Id);
+    Nan::SetPrototypeMethod(constructor, "toString", ToString);
 
     target->Set(name, constructor->GetFunction());
 }
 
 Cell::Cell()
-    : ObjectWrap(),
+    : Nan::ObjectWrap(),
       this_() {}
 
 Handle<Value> Cell::New(const Arguments& args) {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (!args.IsConstructCall()) {
-        return NanThrowError("Use the new operator to create instances of this object.");
+    if (!info.IsConstructCall()) {
+        return Nan::ThrowError("Use the new operator to create instances of this object.");
     }
 
-    if (args[0]->IsExternal()) {
-        Local<External> ext = Local<External>::Cast(args[0]);
+    if (info[0]->IsExternal()) {
+        Local<External> ext = Local<External>::Cast(info[0]);
         void* ptr = ext->Value();
         Cell* ll = static_cast<Cell*>(ptr);
-        ll->Wrap(args.This());
-        return args.This();
+        ll->Wrap(info.This());
+        return info.This();
     }
 
-    if (args.Length() != 1) {
-        return NanThrowError("(latlng) required");
+    if (info.Length() != 1) {
+        return Nan::ThrowError("(latlng) required");
     }
 
     Cell* obj = new Cell();
 
-    obj->Wrap(args.This());
+    obj->Wrap(info.This());
 
-    Handle<Object> ll = args[0]->ToObject();
+    Handle<Object> ll = info[0]->ToObject();
 
-    if (NanHasInstance(LatLng::constructor, ll)) {
+    if (Nan::New(LatLng::constructor)->HasInstance( ll)) {
         obj->this_ = S2Cell(
-            S2CellId::FromLatLng(node::ObjectWrap::Unwrap<LatLng>(ll)->get()));
-    } else if (NanHasInstance(CellId::constructor, ll)) {
-        obj->this_ = S2Cell(node::ObjectWrap::Unwrap<CellId>(ll)->get());
+            S2CellId::FromLatLng(Nan::ObjectWrap::Unwrap<LatLng>(ll)->get()));
+    } else if (Nan::New(CellId::constructor)->HasInstance( ll)) {
+        obj->this_ = S2Cell(Nan::ObjectWrap::Unwrap<CellId>(ll)->get());
     } else {
-        return NanThrowError("(latlng) or (cellid) required");
+        return Nan::ThrowError("(latlng) or (cellid) required");
     }
 
-    return args.This();
+    return info.This();
 }
 
 Handle<Value> Cell::New(S2Cell s2cell) {
-    NanScope();
+    Nan::HandleScope scope;
     Cell* obj = new Cell();
     obj->this_ = s2cell;
     Handle<Value> ext = External::New(obj);
@@ -93,7 +93,7 @@ Handle<Value> Cell::New(S2Cell s2cell) {
 }
 
 Handle<Value> Cell::New(S2CellId s2cellid) {
-    NanScope();
+    Nan::HandleScope scope;
     Cell* obj = new Cell();
     obj->this_ = S2Cell(s2cellid);
     Handle<Value> ext = External::New(obj);
@@ -102,73 +102,73 @@ Handle<Value> Cell::New(S2CellId s2cellid) {
 }
 
 NAN_METHOD(Cell::ApproxArea) {
-    NanScope();
-    Cell* obj = ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.ApproxArea()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.ApproxArea()));
 }
 
 NAN_METHOD(Cell::ExactArea) {
-    NanScope();
-    Cell* obj = ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.ExactArea()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.ExactArea()));
 }
 
 NAN_METHOD(Cell::AverageArea) {
-    NanScope();
-    Cell* obj = ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.AverageArea(args[0]->ToNumber()->Value())));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.AverageArea(info[0]->ToNumber()->Value())));
 }
 
 NAN_METHOD(Cell::Face) {
-    NanScope();
-    Cell* obj = ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.face()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.face()));
 }
 
 NAN_METHOD(Cell::Level) {
-    NanScope();
-    Cell* obj = ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.level()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.level()));
 }
 
 NAN_METHOD(Cell::Orientation) {
-    NanScope();
-    Cell* obj = ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.orientation()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.orientation()));
 }
 
 NAN_METHOD(Cell::IsLeaf) {
-    NanScope();
-    Cell* obj = ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<Boolean>(obj->this_.is_leaf()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<Boolean>(obj->this_.is_leaf()));
 }
 
 NAN_METHOD(Cell::GetCapBound) {
-    NanScope();
-    Cell* obj = node::ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(Cap::New(obj->this_.GetCapBound()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Cap::New(obj->this_.GetCapBound()));
 }
 
 NAN_METHOD(Cell::GetCenter) {
-    NanScope();
-    Cell* obj = node::ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(Point::New(obj->this_.GetCenterRaw()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Point::New(obj->this_.GetCenterRaw()));
 }
 
 NAN_METHOD(Cell::Id) {
-    NanScope();
-    Cell* obj = node::ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(CellId::New(obj->this_.id()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(CellId::New(obj->this_.id()));
 }
 
 NAN_METHOD(Cell::ToString) {
-    NanScope();
-    Cell* obj = node::ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(NanNew<String>(obj->this_.id().ToString().c_str()));
+    Nan::HandleScope scope;
+    Cell* obj = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Nan::New<String>(obj->this_.id().ToString().c_str())).ToLocalChecked();
 }
 
 NAN_METHOD(Cell::GetVertex) {
-    NanScope();
-    Cell* cell = node::ObjectWrap::Unwrap<Cell>(args.This());
-    NanReturnValue(Point::New(cell->this_.GetVertex(args[0]->ToNumber()->Value())));
+    Nan::HandleScope scope;
+    Cell* cell = Nan::ObjectWrap::Unwrap<Cell>(info.This());
+    info.GetReturnValue().Set(Point::New(cell->this_.GetVertex(info[0]->ToNumber()->Value())));
 }

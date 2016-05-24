@@ -1,6 +1,6 @@
 #include <node.h>
 #include <nan.h>
-#include "node_object_wrap.h"           // for ObjectWrap
+#include "node_object_wrap.h"           // for Nan::ObjectWrap
 #include "v8.h"                         // for Handle, String, Integer, etc
 
 #include "s2.h"
@@ -11,10 +11,10 @@
 
 using namespace v8;
 
-Persistent<FunctionTemplate> Angle::constructor;
+Nan::Persistent<FunctionTemplate> Angle::constructor;
 
 void Angle::Init(Handle<Object> target) {
-    NanScope();
+    Nan::HandleScope scope;
 
     constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Angle::New));
     Local<String> name = String::NewSymbol("S1Angle");
@@ -23,7 +23,7 @@ void Angle::Init(Handle<Object> target) {
     constructor->SetClassName(name);
 
     // Add all prototype methods, getters and setters here.
-    NODE_SET_PROTOTYPE_METHOD(constructor, "normalize", Normalize);
+    Nan::SetPrototypeMethod(constructor, "normalize", Normalize);
 
     // This has to be last, otherwise the properties won't show up on the
     // object in JavaScript.
@@ -31,49 +31,49 @@ void Angle::Init(Handle<Object> target) {
 }
 
 Angle::Angle()
-    : ObjectWrap(),
+    : Nan::ObjectWrap(),
       this_() {}
 
 Handle<Value> Angle::New(const Arguments& args) {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (!args.IsConstructCall()) {
-        return NanThrowError("Use the new operator to create instances of this object.");
+    if (!info.IsConstructCall()) {
+        return Nan::ThrowError("Use the new operator to create instances of this object.");
     }
 
-    if (args[0]->IsExternal()) {
-        Local<External> ext = Local<External>::Cast(args[0]);
+    if (info[0]->IsExternal()) {
+        Local<External> ext = Local<External>::Cast(info[0]);
         void* ptr = ext->Value();
         Angle* ll = static_cast<Angle*>(ptr);
-        ll->Wrap(args.This());
-        return args.This();
+        ll->Wrap(info.This());
+        return info.This();
     }
 
-    if (args.Length() != 2) {
-        return NanThrowError("(point, point) required");
+    if (info.Length() != 2) {
+        return Nan::ThrowError("(point, point) required");
     }
 
     Angle* obj = new Angle();
 
-    obj->Wrap(args.This());
+    obj->Wrap(info.This());
 
-    Handle<Object> a = args[0]->ToObject();
-    Handle<Object> b = args[1]->ToObject();
+    Handle<Object> a = info[0]->ToObject();
+    Handle<Object> b = info[1]->ToObject();
 
-    if (!NanHasInstance(Point::constructor, a) ||
-        !NanHasInstance(Point::constructor, a)) {
-        return NanThrowError("(point, point) required");
+    if (!Nan::New(Point::constructor)->HasInstance( a) ||
+        !Nan::New(Point::constructor)->HasInstance( a)) {
+        return Nan::ThrowError("(point, point) required");
     }
 
     obj->this_ = S1Angle(
-        node::ObjectWrap::Unwrap<Point>(a)->get(),
-        node::ObjectWrap::Unwrap<Point>(b)->get());
+        Nan::ObjectWrap::Unwrap<Point>(a)->get(),
+        Nan::ObjectWrap::Unwrap<Point>(b)->get());
 
-    return args.This();
+    return info.This();
 }
 
 Handle<Value> Angle::New(S1Angle s1angle) {
-    NanScope();
+    Nan::HandleScope scope;
     Angle* obj = new Angle();
     obj->this_ = s1angle;
     Handle<Value> ext = External::New(obj);
@@ -82,8 +82,8 @@ Handle<Value> Angle::New(S1Angle s1angle) {
 }
 
 NAN_METHOD(Angle::Normalize) {
-    NanScope();
-    Angle* obj = ObjectWrap::Unwrap<Angle>(args.This());
+    Nan::HandleScope scope;
+    Angle* obj = Nan::ObjectWrap::Unwrap<Angle>(info.This());
     obj->this_.Normalize();
-    return scope.Close(args.This());
+    return scope.Close(info.This());
 }

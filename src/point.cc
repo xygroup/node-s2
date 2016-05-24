@@ -8,10 +8,10 @@
 
 using namespace v8;
 
-Persistent<FunctionTemplate> Point::constructor;
+Nan::Persistent<FunctionTemplate> Point::constructor;
 
 void Point::Init(Handle<Object> target) {
-    NanScope();
+    Nan::HandleScope scope;
 
     constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(Point::New));
     Local<String> name = String::NewSymbol("S2Point");
@@ -19,50 +19,50 @@ void Point::Init(Handle<Object> target) {
     constructor->InstanceTemplate()->SetInternalFieldCount(1);
     constructor->SetClassName(name);
 
-    NODE_SET_PROTOTYPE_METHOD(constructor, "x", X);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "y", Y);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "z", Z);
+    Nan::SetPrototypeMethod(constructor, "x", X);
+    Nan::SetPrototypeMethod(constructor, "y", Y);
+    Nan::SetPrototypeMethod(constructor, "z", Z);
 
     target->Set(name, constructor->GetFunction());
 }
 
 Point::Point()
-    : ObjectWrap(),
+    : Nan::ObjectWrap(),
       this_() {}
 
 Handle<Value> Point::New(const Arguments& args) {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (!args.IsConstructCall()) {
-        return NanThrowError("Use the new operator to create instances of this object.");
+    if (!info.IsConstructCall()) {
+        return Nan::ThrowError("Use the new operator to create instances of this object.");
     }
 
-    if (args[0]->IsExternal()) {
-        Local<External> ext = Local<External>::Cast(args[0]);
+    if (info[0]->IsExternal()) {
+        Local<External> ext = Local<External>::Cast(info[0]);
         void* ptr = ext->Value();
         Point* p = static_cast<Point*>(ptr);
-        p->Wrap(args.This());
-        return args.This();
+        p->Wrap(info.This());
+        return info.This();
     }
 
-    if (args.Length() != 3) {
-        return NanThrowError("(number, number, number) required");
+    if (info.Length() != 3) {
+        return Nan::ThrowError("(number, number, number) required");
     }
 
     Point* obj = new Point();
 
-    obj->Wrap(args.This());
+    obj->Wrap(info.This());
 
     obj->this_ = S2Point(
-        args[0]->ToNumber()->Value(),
-        args[1]->ToNumber()->Value(),
-        args[2]->ToNumber()->Value());
+        info[0]->ToNumber()->Value(),
+        info[1]->ToNumber()->Value(),
+        info[2]->ToNumber()->Value());
 
-    return args.This();
+    return info.This();
 }
 
 Handle<Value> Point::New(S2Point s2cell) {
-    NanScope();
+    Nan::HandleScope scope;
     Point* obj = new Point();
     obj->this_ = s2cell;
     Handle<Value> ext = External::New(obj);
@@ -71,19 +71,19 @@ Handle<Value> Point::New(S2Point s2cell) {
 }
 
 NAN_METHOD(Point::X) {
-    NanScope();
-    Point* obj = ObjectWrap::Unwrap<Point>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.x()));
+    Nan::HandleScope scope;
+    Point* obj = Nan::ObjectWrap::Unwrap<Point>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.x()));
 }
 
 NAN_METHOD(Point::Y) {
-    NanScope();
-    Point* obj = ObjectWrap::Unwrap<Point>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.y()));
+    Nan::HandleScope scope;
+    Point* obj = Nan::ObjectWrap::Unwrap<Point>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.y()));
 }
 
 NAN_METHOD(Point::Z) {
-    NanScope();
-    Point* obj = ObjectWrap::Unwrap<Point>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.z()));
+    Nan::HandleScope scope;
+    Point* obj = Nan::ObjectWrap::Unwrap<Point>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.z()));
 }

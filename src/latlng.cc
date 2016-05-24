@@ -1,6 +1,6 @@
 #include <node.h>
 #include <nan.h>
-#include "node_object_wrap.h"           // for ObjectWrap
+#include "node_object_wrap.h"           // for Nan::ObjectWrap
 #include "v8.h"                         // for Handle, String, Integer, etc
 
 #include "s2.h"
@@ -10,10 +10,10 @@
 
 using namespace v8;
 
-Persistent<FunctionTemplate> LatLng::constructor;
+Nan::Persistent<FunctionTemplate> LatLng::constructor;
 
 void LatLng::Init(Handle<Object> target) {
-    NanScope();
+    Nan::HandleScope scope;
 
     constructor = Persistent<FunctionTemplate>::New(FunctionTemplate::New(LatLng::New));
     Local<String> name = String::NewSymbol("S2LatLng");
@@ -22,15 +22,15 @@ void LatLng::Init(Handle<Object> target) {
     constructor->SetClassName(name);
 
     // Add all prototype methods, getters and setters here.
-    NODE_SET_PROTOTYPE_METHOD(constructor, "normalized", Normalized);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "isValid", IsValid);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "toPoint", ToPoint);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "distance", Distance);
-    NODE_SET_PROTOTYPE_METHOD(constructor, "toString", ToString);
+    Nan::SetPrototypeMethod(constructor, "normalized", Normalized);
+    Nan::SetPrototypeMethod(constructor, "isValid", IsValid);
+    Nan::SetPrototypeMethod(constructor, "toPoint", ToPoint);
+    Nan::SetPrototypeMethod(constructor, "distance", Distance);
+    Nan::SetPrototypeMethod(constructor, "toString", ToString);
 
     Local<ObjectTemplate> proto = constructor->PrototypeTemplate();
-    proto->SetAccessor(NanNew<String>("lat"), Lat);
-    proto->SetAccessor(NanNew<String>("lng"), Lng);
+    Nan::SetAccessor(proto, Nan::New<String>("lat").ToLocalChecked(), Lat);
+    Nan::SetAccessor(proto, Nan::New<String>("lng").ToLocalChecked(), Lng);
 
     // This has to be last, otherwise the properties won't show up on the
     // object in JavaScript.
@@ -38,49 +38,49 @@ void LatLng::Init(Handle<Object> target) {
 }
 
 LatLng::LatLng()
-    : ObjectWrap(),
+    : Nan::ObjectWrap(),
       this_() {}
 
 Handle<Value> LatLng::New(const Arguments& args) {
-    NanScope();
+    Nan::HandleScope scope;
 
-    if (!args.IsConstructCall()) {
-        return NanThrowError("Use the new operator to create instances of this object.");
+    if (!info.IsConstructCall()) {
+        return Nan::ThrowError("Use the new operator to create instances of this object.");
     }
 
-    if (args[0]->IsExternal()) {
-        Local<External> ext = Local<External>::Cast(args[0]);
+    if (info[0]->IsExternal()) {
+        Local<External> ext = Local<External>::Cast(info[0]);
         void* ptr = ext->Value();
         LatLng* ll = static_cast<LatLng*>(ptr);
-        ll->Wrap(args.This());
-        return args.This();
+        ll->Wrap(info.This());
+        return info.This();
     }
 
     LatLng* obj = new LatLng();
-    obj->Wrap(args.This());
+    obj->Wrap(info.This());
 
-    if (args.Length() == 2) {
-        if (args[0]->IsNumber() &&
-            args[1]->IsNumber()) {
+    if (info.Length() == 2) {
+        if (info[0]->IsNumber() &&
+            info[1]->IsNumber()) {
             obj->this_ = S2LatLng::FromDegrees(
-                args[0]->ToNumber()->Value(),
-                args[1]->ToNumber()->Value());
+                info[0]->ToNumber()->Value(),
+                info[1]->ToNumber()->Value());
         }
-    } else if (args.Length() == 1) {
-        Handle<Object> fromObj = args[0]->ToObject();
-        if (NanHasInstance(Point::constructor, fromObj)) {
-            S2Point p = node::ObjectWrap::Unwrap<Point>(fromObj)->get();
+    } else if (info.Length() == 1) {
+        Handle<Object> fromObj = info[0]->ToObject();
+        if (Nan::New(Point::constructor)->HasInstance( fromObj)) {
+            S2Point p = Nan::ObjectWrap::Unwrap<Point>(fromObj)->get();
             obj->this_ = S2LatLng(p);
         } else {
-            return NanThrowError("Use the new operator to create instances of this object.");
+            return Nan::ThrowError("Use the new operator to create instances of this object.");
         }
     }
 
-    return args.This();
+    return info.This();
 }
 
 Handle<Value> LatLng::New(S2LatLng s2latlng) {
-    NanScope();
+    Nan::HandleScope scope;
     LatLng* obj = new LatLng();
     obj->this_ = s2latlng;
     Handle<Value> ext = External::New(obj);
@@ -89,43 +89,43 @@ Handle<Value> LatLng::New(S2LatLng s2latlng) {
 }
 
 NAN_GETTER(LatLng::Lat) {
-    NanScope();
-    LatLng* obj = ObjectWrap::Unwrap<LatLng>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.lat().degrees()));
+    Nan::HandleScope scope;
+    LatLng* obj = Nan::ObjectWrap::Unwrap<LatLng>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.lat().degrees()));
 }
 
 NAN_GETTER(LatLng::Lng) {
-    NanScope();
-    LatLng* obj = ObjectWrap::Unwrap<LatLng>(args.This());
-    NanReturnValue(NanNew<Number>(obj->this_.lng().degrees()));
+    Nan::HandleScope scope;
+    LatLng* obj = Nan::ObjectWrap::Unwrap<LatLng>(info.This());
+    info.GetReturnValue().Set(Nan::New<Number>(obj->this_.lng().degrees()));
 }
 
 NAN_METHOD(LatLng::IsValid) {
-    NanScope();
-    LatLng* obj = ObjectWrap::Unwrap<LatLng>(args.This());
-    NanReturnValue(NanNew<Boolean>(obj->this_.is_valid()));
+    Nan::HandleScope scope;
+    LatLng* obj = Nan::ObjectWrap::Unwrap<LatLng>(info.This());
+    info.GetReturnValue().Set(Nan::New<Boolean>(obj->this_.is_valid()));
 }
 
 NAN_METHOD(LatLng::Normalized) {
-    NanScope();
-    LatLng* obj = ObjectWrap::Unwrap<LatLng>(args.This());
+    Nan::HandleScope scope;
+    LatLng* obj = Nan::ObjectWrap::Unwrap<LatLng>(info.This());
     return scope.Close(LatLng::New(obj->this_.Normalized()));
 }
 
 NAN_METHOD(LatLng::ToPoint) {
-    NanScope();
-    LatLng* obj = ObjectWrap::Unwrap<LatLng>(args.This());
+    Nan::HandleScope scope;
+    LatLng* obj = Nan::ObjectWrap::Unwrap<LatLng>(info.This());
     return scope.Close(Point::New(obj->this_.ToPoint()));
 }
 
 NAN_METHOD(LatLng::Distance) {
-    NanScope();
-    LatLng* latlng = node::ObjectWrap::Unwrap<LatLng>(args.This());
-    S2LatLng other = node::ObjectWrap::Unwrap<LatLng>(args[0]->ToObject())->get();
-    NanReturnValue(NanNew<Number>(latlng->this_.GetDistance(other).degrees()));
+    Nan::HandleScope scope;
+    LatLng* latlng = Nan::ObjectWrap::Unwrap<LatLng>(info.This());
+    S2LatLng other = Nan::ObjectWrap::Unwrap<LatLng>(info[0]->ToObject())->get();
+    info.GetReturnValue().Set(Nan::New<Number>(latlng->this_.GetDistance(other).degrees()));
 }
 NAN_METHOD(LatLng::ToString) {
-    NanScope();
-    LatLng* latlng = node::ObjectWrap::Unwrap<LatLng>(args.This());
-    NanReturnValue(NanNew<String>(latlng->this_.ToStringInDegrees().c_str()));
+    Nan::HandleScope scope;
+    LatLng* latlng = Nan::ObjectWrap::Unwrap<LatLng>(info.This());
+    info.GetReturnValue().Set(Nan::New<String>(latlng->this_.ToStringInDegrees().c_str())).ToLocalChecked();
 }

@@ -2,7 +2,7 @@
 #include <nan.h>
 #include <memory>
 #include <vector>
-#include "node_object_wrap.h"  // for ObjectWrap
+#include "node_object_wrap.h"  // for Nan::ObjectWrap
 #include "v8.h"                // for Handle, String, Integer, etc
 
 #include "s2latlng.h"
@@ -47,14 +47,14 @@ struct CoverConfiguration {
   S2Cap cap;
 };
 
-class CoverWorker : public NanAsyncWorker {
+class CoverWorker : public Nan::AsyncWorker {
  private:
   std::vector<S2CellId> cellids_vector;
 
  public:
-  CoverWorker(NanCallback *callback,
+  CoverWorker(Nan::Callback *callback,
               std::shared_ptr<CoverConfiguration> coverConfiguration)
-      : NanAsyncWorker(callback), coverConfiguration(coverConfiguration) {}
+      : Nan::AsyncWorker(callback), coverConfiguration(coverConfiguration) {}
   ~CoverWorker() {}
 
   // Executed inside the worker-thread.
@@ -96,7 +96,7 @@ class CoverWorker : public NanAsyncWorker {
   // this function will be run inside the main event loop
   // so it is safe to use V8 again
   void HandleOKCallback() {
-    NanScope();
+    Nan::HandleScope scope;
 
     Local<Array> out = Array::New(cellids_vector.size());
     if (coverConfiguration->result_type == "cell") {
@@ -109,11 +109,11 @@ class CoverWorker : public NanAsyncWorker {
       }
     } else if (coverConfiguration->result_type == "string") {
       for (std::size_t i = 0; i < cellids_vector.size(); ++i) {
-        out->Set(i, NanNew<String>(cellids_vector.at(i).ToString()));
+        out->Set(i, Nan::New<String>(cellids_vector.at(i).ToString())).ToLocalChecked();
       }
     } else if (coverConfiguration->result_type == "token") {
       for (std::size_t i = 0; i < cellids_vector.size(); ++i) {
-        out->Set(i, NanNew<String>(cellids_vector.at(i).ToToken()));
+        out->Set(i, Nan::New<String>(cellids_vector.at(i).ToToken())).ToLocalChecked();
       }
     } else if (coverConfiguration->result_type == "point") {
             for (std::size_t i = 0; i < cellids_vector.size(); ++i) {
@@ -121,16 +121,16 @@ class CoverWorker : public NanAsyncWorker {
       }
     }
     if (coverConfiguration->type == "undefined") {
-      v8::Local<v8::Value> argv[] = {Exception::Error(String::New("cover type not specified")), NanNull()};
+      v8::Local<v8::Value> argv[] = {Exception::Error(String::New("cover type not specified")), Nan::Null()};
       callback->Call(2, argv);
     } else {
-      v8::Local<v8::Value> argv[] = {NanNull(), out};
+      v8::Local<v8::Value> argv[] = {Nan::Null(), out};
       callback->Call(2, argv);
     }
   }
 
   void HandleErrorCallback() {
-    NanScope();
+    Nan::HandleScope scope;
     Local<Value> argv[] = {Exception::Error(String::New("fail!"))};
     callback->Call(1, argv);
   };
@@ -140,50 +140,50 @@ class CoverWorker : public NanAsyncWorker {
 };
 
 NAN_METHOD(GetCover) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (args.Length() < 1) {
-    return NanThrowError("(array, [min, max, mod]) required");
+  if (info.Length() < 1) {
+    return Nan::ThrowError("(array, [min, max, mod]) required");
   }
 
   typedef std::vector<pair<S2Point, S2Point>> EdgeList;
   std::shared_ptr<CoverConfiguration> coverConfiguration =
       std::make_shared<CoverConfiguration>();
 
-  if (args.Length() > 2) {
-    Handle<Object> opt = args[1]->ToObject();
-    if (opt->Has(NanNew<String>("min"))) {
+  if (info.Length() > 2) {
+    Handle<Object> opt = info[1]->ToObject();
+    if (opt->Has(Nan::New<String>("min").ToLocalChecked())) {
       coverConfiguration->min_level =
-          opt->Get(NanNew<String>("min"))->ToInteger()->Value();
+          opt->Get(Nan::New<String>("min").ToLocalChecked())->ToInteger()->Value();
     }
-    if (opt->Has(NanNew<String>("max"))) {
+    if (opt->Has(Nan::New<String>("max").ToLocalChecked())) {
       coverConfiguration->max_level =
-          opt->Get(NanNew<String>("max"))->ToInteger()->Value();
+          opt->Get(Nan::New<String>("max").ToLocalChecked())->ToInteger()->Value();
     }
-    if (opt->Has(NanNew<String>("mod"))) {
+    if (opt->Has(Nan::New<String>("mod").ToLocalChecked())) {
       coverConfiguration->level_mod =
-          opt->Get(NanNew<String>("mod"))->ToInteger()->Value();
+          opt->Get(Nan::New<String>("mod").ToLocalChecked())->ToInteger()->Value();
     }
-    if (opt->Has(NanNew<String>("max_cells"))) {
+    if (opt->Has(Nan::New<String>("max_cells").ToLocalChecked())) {
       coverConfiguration->max_cells =
-          opt->Get(NanNew<String>("max_cells"))->ToInteger()->Value();
+          opt->Get(Nan::New<String>("max_cells").ToLocalChecked())->ToInteger()->Value();
     }
-    if (opt->Has(NanNew<String>("type"))) {
+    if (opt->Has(Nan::New<String>("type").ToLocalChecked())) {
       coverConfiguration->type =
-          *NanAsciiString(opt->Get(NanNew<String>("type")));
+          *NanAsciiString(opt->Get(Nan::New<String>("type").ToLocalChecked()));
     }
-    if (opt->Has(NanNew<String>("result_type"))) {
+    if (opt->Has(Nan::New<String>("result_type").ToLocalChecked())) {
       coverConfiguration->result_type =
-          *NanAsciiString(opt->Get(NanNew<String>("result_type")));
+          *NanAsciiString(opt->Get(Nan::New<String>("result_type").ToLocalChecked()));
     }
   }
 
   // Check the number of arguments. we need size-1 as the callback always goes
   // last
-  NanCallback *callback =
-      new NanCallback(args[args.Length() - 1].As<Function>());
-  if (args[0]->IsArray()) {
-    Handle<Array> array = Handle<Array>::Cast(args[0]);
+  Nan::Callback *callback =
+      new Nan::Callback(info[info.Length() - 1].As<Function>());
+  if (info[0]->IsArray()) {
+    Handle<Array> array = Handle<Array>::Cast(info[0]);
 
     if (coverConfiguration->type == "polygon") {
       S2PolygonBuilderOptions polyOptions;
@@ -199,11 +199,11 @@ NAN_METHOD(GetCover) {
 
         for (std::size_t ii = 0; ii < pointArray->Length(); ++ii) {
           Local<Object> obj = pointArray->Get(ii)->ToObject();
-          if (NanHasInstance(Point::constructor, obj)) {
-            S2Point p = node::ObjectWrap::Unwrap<Point>(obj)->get();
+          if (Nan::New(Point::constructor)->HasInstance( obj)) {
+            S2Point p = Nan::ObjectWrap::Unwrap<Point>(obj)->get();
             points.push_back(p);
           } else {
-            return NanThrowError("array must contain only points");
+            return Nan::ThrowError("array must contain only points");
           }
         }
         // construct polygon loop
@@ -219,7 +219,7 @@ NAN_METHOD(GetCover) {
           loop.Invert();
         }
         if (!loop.IsValid()) {
-          return NanThrowError("invalid loop");
+          return Nan::ThrowError("invalid loop");
         }
         builder.AddLoop(&loop);
       }
@@ -230,12 +230,12 @@ NAN_METHOD(GetCover) {
       std::vector<S2Point> points;
       for (std::size_t i = 0; i < array->Length(); ++i) {
         Local<Object> obj = array->Get(i)->ToObject();
-        if (NanHasInstance(Point::constructor, obj)) {
+        if (Nan::New(Point::constructor)->HasInstance( obj)) {
           S2Point p =
-              node::ObjectWrap::Unwrap<Point>(array->Get(i)->ToObject())->get();
+              Nan::ObjectWrap::Unwrap<Point>(array->Get(i)->ToObject())->get();
           points.push_back(p);
         } else {
-          return NanThrowError("array must contain only points");
+          return Nan::ThrowError("array must contain only points");
         }
       }
       coverConfiguration->polyline = std::make_shared<S2Polyline>(points);
@@ -254,11 +254,11 @@ NAN_METHOD(GetCover) {
           Handle<Array> pointArray = Handle<Array>::Cast(ringArray->Get(i));
           for (std::size_t ii = 0; ii < pointArray->Length(); ++ii) {
             Local<Object> obj = pointArray->Get(ii)->ToObject();
-            if (NanHasInstance(Point::constructor, obj)) {
-              S2Point p = node::ObjectWrap::Unwrap<Point>(obj)->get();
+            if (Nan::New(Point::constructor)->HasInstance( obj)) {
+              S2Point p = Nan::ObjectWrap::Unwrap<Point>(obj)->get();
               points.push_back(p);
             } else {
-              return NanThrowError("array must contain only points");
+              return Nan::ThrowError("array must contain only points");
             }
           }
           // construct polygon loop
@@ -274,7 +274,7 @@ NAN_METHOD(GetCover) {
             loop.Invert();
           }
           if (!loop.IsValid()) {
-            return NanThrowError("invalid loop");
+            return Nan::ThrowError("invalid loop");
           }
           builder.AddLoop(&loop);
         }
@@ -283,31 +283,31 @@ NAN_METHOD(GetCover) {
       EdgeList edgeList;
       builder.AssemblePolygon(&coverConfiguration->polygon, &edgeList);
     }
-  } else if (NanHasInstance(LatLngRect::constructor, args[0])) {
+  } else if (Nan::New(LatLngRect::constructor)->HasInstance( info[0])) {
     coverConfiguration->type = "rect";
     coverConfiguration->rect =
-        node::ObjectWrap::Unwrap<LatLngRect>(args[0]->ToObject())->get();
-  } else if (NanHasInstance(Cell::constructor, args[0])) {
+        Nan::ObjectWrap::Unwrap<LatLngRect>(info[0]->ToObject())->get();
+  } else if (Nan::New(Cell::constructor)->HasInstance( info[0])) {
     coverConfiguration->type = "cell";
     coverConfiguration->cell =
-        node::ObjectWrap::Unwrap<Cell>(args[0]->ToObject())->get();
-  } else if (NanHasInstance(Cap::constructor, args[0])) {
+        Nan::ObjectWrap::Unwrap<Cell>(info[0]->ToObject())->get();
+  } else if (Nan::New(Cap::constructor)->HasInstance( info[0])) {
     coverConfiguration->type = "cap";
     coverConfiguration->cap =
-        node::ObjectWrap::Unwrap<Cap>(args[0]->ToObject())->get();
+        Nan::ObjectWrap::Unwrap<Cap>(info[0]->ToObject())->get();
   } else {
     coverConfiguration->type = "undefined";
   }
 
-  NanAsyncQueueWorker(new CoverWorker(callback, coverConfiguration));
-  NanReturnUndefined();
+  Nan::AsyncQueueWorker(new CoverWorker(callback, coverConfiguration));
+  return;
 }
 
 NAN_METHOD(GetCoverSync) {
-  NanScope();
+  Nan::HandleScope scope;
 
-  if (args.Length() < 1) {
-    return NanThrowError("(array, [min, max, mod]) required");
+  if (info.Length() < 1) {
+    return Nan::ThrowError("(array, [min, max, mod]) required");
   }
 
   typedef std::vector<pair<S2Point, S2Point>> EdgeList;
@@ -317,34 +317,34 @@ NAN_METHOD(GetCoverSync) {
   std::string type{"polygon"};
   std::string result_type{"cell"};
 
-  if (args.Length() > 1) {
-    Handle<Object> opt = args[1]->ToObject();
-    if (opt->Has(NanNew<String>("min"))) {
+  if (info.Length() > 1) {
+    Handle<Object> opt = info[1]->ToObject();
+    if (opt->Has(Nan::New<String>("min").ToLocalChecked())) {
       coverer.set_min_level(
-          opt->Get(NanNew<String>("min"))->ToInteger()->Value());
+          opt->Get(Nan::New<String>("min").ToLocalChecked())->ToInteger()->Value());
     }
-    if (opt->Has(NanNew<String>("max"))) {
+    if (opt->Has(Nan::New<String>("max").ToLocalChecked())) {
       coverer.set_max_level(
-          opt->Get(NanNew<String>("max"))->ToInteger()->Value());
+          opt->Get(Nan::New<String>("max").ToLocalChecked())->ToInteger()->Value());
     }
-    if (opt->Has(NanNew<String>("mod"))) {
+    if (opt->Has(Nan::New<String>("mod").ToLocalChecked())) {
       coverer.set_level_mod(
-          opt->Get(NanNew<String>("mod"))->ToInteger()->Value());
+          opt->Get(Nan::New<String>("mod").ToLocalChecked())->ToInteger()->Value());
     }
-    if (opt->Has(NanNew<String>("max_cells"))) {
+    if (opt->Has(Nan::New<String>("max_cells").ToLocalChecked())) {
       coverer.set_max_cells(
-          opt->Get(NanNew<String>("max_cells"))->ToInteger()->Value());
+          opt->Get(Nan::New<String>("max_cells").ToLocalChecked())->ToInteger()->Value());
     }
-    if (opt->Has(NanNew<String>("type"))) {
-      type = *NanAsciiString(opt->Get(NanNew<String>("type")));
+    if (opt->Has(Nan::New<String>("type").ToLocalChecked())) {
+      type = *NanAsciiString(opt->Get(Nan::New<String>("type").ToLocalChecked()));
     }
-    if (opt->Has(NanNew<String>("result_type"))) {
-      result_type = *NanAsciiString(opt->Get(NanNew<String>("result_type")));
+    if (opt->Has(Nan::New<String>("result_type").ToLocalChecked())) {
+      result_type = *NanAsciiString(opt->Get(Nan::New<String>("result_type").ToLocalChecked()));
     }
   }
 
-  if (args[0]->IsArray()) {
-    Handle<Array> array = Handle<Array>::Cast(args[0]);
+  if (info[0]->IsArray()) {
+    Handle<Array> array = Handle<Array>::Cast(info[0]);
 
     if (type == "polygon") {
       S2PolygonBuilderOptions polyOptions;
@@ -361,11 +361,11 @@ NAN_METHOD(GetCoverSync) {
 
         for (std::size_t ii = 0; ii < pointArray->Length(); ++ii) {
           Local<Object> obj = pointArray->Get(ii)->ToObject();
-          if (NanHasInstance(Point::constructor, obj)) {
-            S2Point p = node::ObjectWrap::Unwrap<Point>(obj)->get();
+          if (Nan::New(Point::constructor)->HasInstance( obj)) {
+            S2Point p = Nan::ObjectWrap::Unwrap<Point>(obj)->get();
             points.push_back(p);
           } else {
-            return NanThrowError("array must contain only points");
+            return Nan::ThrowError("array must contain only points");
           }
         }
         // construct polygon loop
@@ -382,7 +382,7 @@ NAN_METHOD(GetCoverSync) {
         }
 
         if (!loop.IsValid()) {
-          return NanThrowError("invalid loop");
+          return Nan::ThrowError("invalid loop");
         }
 
         builder.AddLoop(&loop);
@@ -395,12 +395,12 @@ NAN_METHOD(GetCoverSync) {
       std::vector<S2Point> points;
       for (std::size_t i = 0; i < array->Length(); ++i) {
         Local<Object> obj = array->Get(i)->ToObject();
-        if (NanHasInstance(Point::constructor, obj)) {
+        if (Nan::New(Point::constructor)->HasInstance( obj)) {
           S2Point p =
-              node::ObjectWrap::Unwrap<Point>(array->Get(i)->ToObject())->get();
+              Nan::ObjectWrap::Unwrap<Point>(array->Get(i)->ToObject())->get();
           points.push_back(p);
         } else {
-          return NanThrowError("array must contain only points");
+          return Nan::ThrowError("array must contain only points");
         }
       }
       S2Polyline polyline(points);
@@ -421,11 +421,11 @@ NAN_METHOD(GetCoverSync) {
           Handle<Array> pointArray = Handle<Array>::Cast(ringArray->Get(i));
           for (std::size_t ii = 0; ii < pointArray->Length(); ++ii) {
             Local<Object> obj = pointArray->Get(ii)->ToObject();
-            if (NanHasInstance(Point::constructor, obj)) {
-              S2Point p = node::ObjectWrap::Unwrap<Point>(obj)->get();
+            if (Nan::New(Point::constructor)->HasInstance( obj)) {
+              S2Point p = Nan::ObjectWrap::Unwrap<Point>(obj)->get();
               points.push_back(p);
             } else {
-              return NanThrowError("array must contain only points");
+              return Nan::ThrowError("array must contain only points");
             }
           }
           // construct polygon loop
@@ -442,7 +442,7 @@ NAN_METHOD(GetCoverSync) {
           }
 
           if (!loop.IsValid()) {
-            return NanThrowError("invalid loop");
+            return Nan::ThrowError("invalid loop");
           }
 
           builder.AddLoop(&loop);
@@ -453,18 +453,18 @@ NAN_METHOD(GetCoverSync) {
       builder.AssemblePolygon(&polygon, &edgeList);
       coverer.GetCovering(polygon, &cellids_vector);
     }
-  } else if (NanHasInstance(LatLngRect::constructor, args[0])) {
+  } else if (Nan::New(LatLngRect::constructor)->HasInstance( info[0])) {
     S2LatLngRect rect =
-        node::ObjectWrap::Unwrap<LatLngRect>(args[0]->ToObject())->get();
+        Nan::ObjectWrap::Unwrap<LatLngRect>(info[0]->ToObject())->get();
     coverer.GetCovering(rect, &cellids_vector);
-  } else if (NanHasInstance(Cell::constructor, args[0])) {
-    S2Cell cell = node::ObjectWrap::Unwrap<Cell>(args[0]->ToObject())->get();
+  } else if (Nan::New(Cell::constructor)->HasInstance( info[0])) {
+    S2Cell cell = Nan::ObjectWrap::Unwrap<Cell>(info[0]->ToObject())->get();
     coverer.GetCovering(cell, &cellids_vector);
-  } else if (NanHasInstance(Cap::constructor, args[0])) {
-    S2Cap cap = node::ObjectWrap::Unwrap<Cap>(args[0]->ToObject())->get();
+  } else if (Nan::New(Cap::constructor)->HasInstance( info[0])) {
+    S2Cap cap = Nan::ObjectWrap::Unwrap<Cap>(info[0]->ToObject())->get();
     coverer.GetCovering(cap, &cellids_vector);
   } else {
-    return NanThrowError("incompatible object to cover");
+    return Nan::ThrowError("incompatible object to cover");
   }
 
   Local<Array> out = Array::New(cellids_vector.size());
@@ -478,11 +478,11 @@ NAN_METHOD(GetCoverSync) {
     }
   } else if (result_type == "string") {
     for (std::size_t i = 0; i < cellids_vector.size(); ++i) {
-      out->Set(i, NanNew<String>(cellids_vector.at(i).ToString()));
+      out->Set(i, Nan::New<String>(cellids_vector.at(i).ToString())).ToLocalChecked();
     }
   } else if (result_type == "token") {
     for (std::size_t i = 0; i < cellids_vector.size(); ++i) {
-      out->Set(i, NanNew<String>(cellids_vector.at(i).ToToken()));
+      out->Set(i, Nan::New<String>(cellids_vector.at(i).ToToken())).ToLocalChecked();
     }
   } else if (result_type == "point") {
     for (std::size_t i = 0; i < cellids_vector.size(); ++i) {
@@ -490,7 +490,7 @@ NAN_METHOD(GetCoverSync) {
     }
   }
 
-  NanReturnValue(out);
+  info.GetReturnValue().Set(out);
 }
 
 void RegisterModule(Handle<Object> exports) {
@@ -503,10 +503,10 @@ void RegisterModule(Handle<Object> exports) {
   Point::Init(exports);
   Interval::Init(exports);
   Polyline::Init(exports);
-  exports->Set(NanNew<String>("getCoverSync"),
-               NanNew<FunctionTemplate>(GetCoverSync)->GetFunction());
-  exports->Set(NanNew<String>("getCover"),
-               NanNew<FunctionTemplate>(GetCover)->GetFunction());
+  exports->Set(Nan::New<String>("getCoverSync").ToLocalChecked(),
+               Nan::New<FunctionTemplate>(GetCoverSync)->GetFunction());
+  exports->Set(Nan::New<String>("getCover").ToLocalChecked(),
+               Nan::New<FunctionTemplate>(GetCover)->GetFunction());
 }
 
 NODE_MODULE(_s2, RegisterModule);

@@ -5,7 +5,7 @@
 #include <nan.h>
 #include "s2cellid.h"
 
-class CellId : public node::ObjectWrap {
+class CellId : public Nan::ObjectWrap {
 public:
     static v8::Persistent<v8::FunctionTemplate> constructor;
     static void Init(v8::Handle<v8::Object> target);
