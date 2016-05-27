@@ -15,7 +15,7 @@ public:
 protected:
     Point();
 
-    static v8::Handle<v8::Value> New(const v8::Arguments& args);
+    static v8::Handle<v8::Value> New(Nan::NAN_METHOD_ARGS_TYPE args);
     static NAN_METHOD(X);
     static NAN_METHOD(Y);
     static NAN_METHOD(Z);

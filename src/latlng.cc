@@ -124,6 +124,7 @@ NAN_METHOD(LatLng::Distance) {
     S2LatLng other = Nan::ObjectWrap::Unwrap<LatLng>(info[0]->ToObject())->get();
     info.GetReturnValue().Set(Nan::New<Number>(latlng->this_.GetDistance(other).degrees()));
 }
+
 NAN_METHOD(LatLng::ToString) {
     Nan::HandleScope scope;
     LatLng* latlng = Nan::ObjectWrap::Unwrap<LatLng>(info.This());

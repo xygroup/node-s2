@@ -1,13 +1,14 @@
-#include <node.h>
+// #include <node.h>
 #include <nan.h>
 #include "node_object_wrap.h"           // for Nan::ObjectWrap
 #include "v8.h"                         // for Handle, String, Integer, etc
+
+#include "angle.h"
 
 #include "s2.h"
 #include "s1angle.h"
 #include "latlng.h"
 #include "point.h"
-#include "angle.h"
 
 using namespace v8;
 

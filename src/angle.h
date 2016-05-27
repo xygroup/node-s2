@@ -3,6 +3,7 @@
 
 #include <node.h>
 #include <nan.h>
+
 #include "s1angle.h"
 
 class Angle : public Nan::ObjectWrap {
