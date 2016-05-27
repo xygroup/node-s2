@@ -34,6 +34,17 @@ NAN_METHOD(callback) {
     Nan::MakeCallback(Nan::GetCurrentContext()->Global(), callbackHandle, 0, 0);
 }
 
+NAN_METHOD(aBuffer) {
+    uint64_t foo = 0;
+
+    auto buf = Nan::CopyBuffer(
+        (char*)&foo,
+        sizeof(foo)
+    ).ToLocalChecked();
+
+    info.GetReturnValue().Set(buf);
+}
+
 // Wrapper Impl
 
 Nan::Persistent<v8::Function> MyObject::constructor;

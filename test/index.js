@@ -10,7 +10,7 @@ describe('native extension', function() {
     assert.equal(obj.plusOne(), 3);
   });
 
-  it('should export function that returns nothing', function() {
+  it('should export a function that returns nothing', function() {
     assert.equal(nativeExtension.nothing(), undefined);
   });
 
@@ -22,28 +22,32 @@ describe('native extension', function() {
     assert.equal(typeof nativeExtension.aBoolean(), 'boolean');
   });
 
-  it('should export function that returns a number', function() {
+  it('should export a function that returns a number', function() {
     assert.equal(typeof nativeExtension.aNumber(), 'number');
   });
 
-  it('should export function that returns an object', function() {
+  it('should export a function that returns an object', function() {
     assert.equal(typeof nativeExtension.anObject(), 'object');
   });
 
-  it('should export function that returns an object with a key, value pair', function() {
+  it('should export a function that returns an object with a key, value pair', function() {
     assert.deepEqual(nativeExtension.anObject(), {'key': 'value'});
   });
 
-  it('should export function that returns an array', function() {
+  it('should export a function that returns an array', function() {
     assert.equal(Array.isArray(nativeExtension.anArray()), true);
   });
 
-  it('should export function that returns an array with some values', function() {
+  it('should export a function that returns an array with some values', function() {
     assert.deepEqual(nativeExtension.anArray(), [1, 2, 3]);
   });
 
-  it('should export function that calls a callback', function(done) {
+  it('should export a function that calls a callback', function(done) {
     nativeExtension.callback(done);
+  });
+  
+  it('should export a function that returns a Buffer', function() {
+    assert.ok(Buffer.isBuffer(nativeExtension.aBuffer()))
   });
   
 });
