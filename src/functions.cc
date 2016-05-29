@@ -1,5 +1,25 @@
 #include "functions.h"
 
+#include "s2.h"
+#include "s2cap.h"
+#include "s2cellid.h"
+#include "s2latlng.h"
+#include "s2regioncoverer.h"
+
+namespace {
+
+const double kEarthCircumferenceMeters = 1000 * 40075.017;
+
+double EarthMetersToRadians(double meters) {
+  return (2 * M_PI) * (meters / kEarthCircumferenceMeters);
+}
+
+double RadiansToEarthMeters(double radians) {
+  return (radians * kEarthCircumferenceMeters) / (2 * M_PI);
+}
+
+}  // namespace
+
 NAN_METHOD(nothing) {
 }
 
@@ -43,6 +63,32 @@ NAN_METHOD(aBuffer) {
     ).ToLocalChecked();
 
     info.GetReturnValue().Set(buf);
+}
+
+NAN_METHOD(DistanceBetweenLocations) {
+    bool bad_args = false;
+
+    if (info[0]->IsUndefined()) bad_args = true;
+    if (info[1]->IsUndefined()) bad_args = true;
+    if (info[2]->IsUndefined()) bad_args = true;
+    if (info[3]->IsUndefined()) bad_args = true;
+
+    if (bad_args) {
+        Nan::ThrowError("Invalid arguments: function requires four double arguments.");
+        return;
+    }
+
+    double lat1 = Nan::To<double>(info[0]).FromJust();
+    double lng1 = Nan::To<double>(info[1]).FromJust();
+    double lat2 = Nan::To<double>(info[2]).FromJust();
+    double lng2 = Nan::To<double>(info[3]).FromJust();
+
+    S2LatLng latlng1 = S2LatLng::FromDegrees(lat1, lng1);
+    S2LatLng latlng2 = S2LatLng::FromDegrees(lat2, lng2);
+
+    double ret = RadiansToEarthMeters(latlng1.GetDistance(latlng2).radians());
+
+    info.GetReturnValue().Set(ret);
 }
 
 // Wrapper Impl

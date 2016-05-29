@@ -22,7 +22,10 @@ NAN_MODULE_INIT(InitAll) {
     Nan::GetFunction(Nan::New<FunctionTemplate>(callback)).ToLocalChecked());
   Nan::Set(target, Nan::New("aBuffer").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(aBuffer)).ToLocalChecked());
-  
+
+  Nan::Set(target, Nan::New("DistanceBetweenLocations").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(DistanceBetweenLocations)).ToLocalChecked());
+
   // Passing target down to the next NAN_MODULE_INIT
   MyObject::Init(target);
 }

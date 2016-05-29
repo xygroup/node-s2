@@ -15,6 +15,8 @@ NAN_METHOD(anArray);
 NAN_METHOD(callback);
 NAN_METHOD(aBuffer);
 
+NAN_METHOD(DistanceBetweenLocations);
+
 // Example with node ObjectWrap
 // Based on https://nodejs.org/api/addons.html#addons_wrapping_c_objects but using NAN
 class MyObject : public Nan::ObjectWrap {

@@ -50,4 +50,14 @@ describe('native extension', function() {
     assert.ok(Buffer.isBuffer(nativeExtension.aBuffer()))
   });
   
+  it("should export a function that calculates the distance between two points on the earth's surface", function() {
+    var los_angeles = { lat: 34.0522, long: 118.2437 }
+    var new_york = { lat: 40.7128, long: 74.0059 }
+    var dist = nativeExtension.DistanceBetweenLocations(los_angeles.lat, los_angeles.long, new_york.lat, new_york.long)
+    var actual = 3940163 // floor of actual
+    // console.log(dist)
+    assert(typeof dist === 'number')
+    assert(dist >= actual && dist <= actual + 1)
+  });
+  
 });
