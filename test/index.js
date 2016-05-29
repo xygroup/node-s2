@@ -59,5 +59,15 @@ describe('native extension', function() {
     assert(typeof dist === 'number')
     assert(dist >= actual && dist <= actual + 1)
   });
-  
+
+  it("should throw when calling DistanceBetweenLocations with missing arguments", function() {
+    try {
+      nativeExtension.DistanceBetweenLocations()
+    } catch (e) {
+      assert(true)
+      return
+    }
+    assert(false)
+  })
+
 });
