@@ -6,23 +6,6 @@ using v8::FunctionTemplate;
 // C++ constructs that are exposed to javascript are exported here
 
 NAN_MODULE_INIT(InitAll) {
-  Nan::Set(target, Nan::New("nothing").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(nothing)).ToLocalChecked());
-  Nan::Set(target, Nan::New("aString").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(aString)).ToLocalChecked());
-  Nan::Set(target, Nan::New("aBoolean").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(aBoolean)).ToLocalChecked());
-  Nan::Set(target, Nan::New("aNumber").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(aNumber)).ToLocalChecked());
-  Nan::Set(target, Nan::New("anObject").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(anObject)).ToLocalChecked());
-  Nan::Set(target, Nan::New("anArray").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(anArray)).ToLocalChecked());
-  Nan::Set(target, Nan::New("callback").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(callback)).ToLocalChecked());
-  Nan::Set(target, Nan::New("aBuffer").ToLocalChecked(),
-    Nan::GetFunction(Nan::New<FunctionTemplate>(aBuffer)).ToLocalChecked());
-
   Nan::Set(target, Nan::New("DistanceBetweenLocations").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(DistanceBetweenLocations)).ToLocalChecked());
   Nan::Set(target, Nan::New("CellAtLocationAndLevel").ToLocalChecked(),
@@ -31,9 +14,6 @@ NAN_MODULE_INIT(InitAll) {
     Nan::GetFunction(Nan::New<FunctionTemplate>(GetClosestLevel)).ToLocalChecked());
   Nan::Set(target, Nan::New("SearchRanges").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(SearchRanges)).ToLocalChecked());
-
-  // Passing target down to the next NAN_MODULE_INIT
-  MyObject::Init(target);
 }
 
 NODE_MODULE(NativeExtension, InitAll)
