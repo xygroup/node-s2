@@ -16,6 +16,8 @@ NAN_METHOD(callback);
 NAN_METHOD(aBuffer);
 
 NAN_METHOD(DistanceBetweenLocations);
+NAN_METHOD(CellAtLocationAndLevel);
+NAN_METHOD(GetClosestLevel);
 
 // Example with node ObjectWrap
 // Based on https://nodejs.org/api/addons.html#addons_wrapping_c_objects but using NAN

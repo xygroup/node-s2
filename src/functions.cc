@@ -91,6 +91,50 @@ NAN_METHOD(DistanceBetweenLocations) {
     info.GetReturnValue().Set(ret);
 }
 
+NAN_METHOD(CellAtLocationAndLevel) {
+    bool bad_args = false;
+
+    if (info[0]->IsUndefined()) bad_args = true;
+    if (info[1]->IsUndefined()) bad_args = true;
+    if (info[2]->IsUndefined()) bad_args = true;
+
+    if (bad_args) {
+        Nan::ThrowError("Invalid arguments: function requires three arguments, two doubles and an integer.");
+        return;
+    }
+
+    double lat = Nan::To<double>(info[0]).FromJust();
+    double lng = Nan::To<double>(info[1]).FromJust();
+    uint32_t level = Nan::To<uint32_t>(info[2]).FromJust();
+
+    S2CellId id(S2CellId::FromLatLng(S2LatLng::FromDegrees(lat, lng)));
+    S2CellId ret = id.parent(level);
+
+    auto buf = Nan::CopyBuffer(
+        (char*)&ret,
+        sizeof(ret)
+    ).ToLocalChecked();
+
+    info.GetReturnValue().Set(buf);
+}
+
+NAN_METHOD(GetClosestLevel) {
+    bool bad_args = false;
+
+    if (info[0]->IsUndefined()) bad_args = true;
+
+    if (bad_args) {
+        Nan::ThrowError("Invalid arguments: function requires one argument, a double.");
+        return;
+    }
+
+    double meters = Nan::To<double>(info[0]).FromJust();
+
+    uint32_t ret = S2::kAvgEdge.GetClosestLevel(EarthMetersToRadians(meters));
+
+    info.GetReturnValue().Set(ret);
+}
+
 // Wrapper Impl
 
 Nan::Persistent<v8::Function> MyObject::constructor;

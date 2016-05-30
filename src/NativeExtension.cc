@@ -25,6 +25,10 @@ NAN_MODULE_INIT(InitAll) {
 
   Nan::Set(target, Nan::New("DistanceBetweenLocations").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(DistanceBetweenLocations)).ToLocalChecked());
+  Nan::Set(target, Nan::New("CellAtLocationAndLevel").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(CellAtLocationAndLevel)).ToLocalChecked());
+  Nan::Set(target, Nan::New("GetClosestLevel").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(GetClosestLevel)).ToLocalChecked());
 
   // Passing target down to the next NAN_MODULE_INIT
   MyObject::Init(target);

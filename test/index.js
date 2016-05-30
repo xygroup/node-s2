@@ -70,4 +70,41 @@ describe('native extension', function() {
     assert(false)
   })
 
+  it("should export a function that calculates the level given a desired edge length in meters", function() {
+    var level = nativeExtension.GetClosestLevel(1000)
+    // console.log(level)
+    assert(typeof level === 'number')
+    assert(level === 13)
+  });
+
+  it("should throw when calling GetClosestLevel with missing arguments", function() {
+    try {
+      nativeExtension.GetClosestLevel()
+    } catch (e) {
+      assert(true)
+      return
+    }
+    assert(false)
+  })
+
+  it("should export a function that calculates the cell at a given location and level", function() {
+    var los_angeles = { lat: 34.0522, long: 118.2437 }
+    var level = nativeExtension.GetClosestLevel(1000)
+    var cell = nativeExtension.CellAtLocationAndLevel(los_angeles.lat, los_angeles.long, level)
+    // console.log(cell)
+    assert(Buffer.isBuffer(cell))
+    assert(cell.length === 8)
+    assert(cell.equals(new Buffer('000000001cc3c735', 'hex')))
+  });
+
+  it("should throw when calling CellAtLocationAndLevel with missing arguments", function() {
+    try {
+      nativeExtension.CellAtLocationAndLevel()
+    } catch (e) {
+      assert(true)
+      return
+    }
+    assert(false)
+  })
+
 });
