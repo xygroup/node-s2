@@ -29,6 +29,8 @@ NAN_MODULE_INIT(InitAll) {
     Nan::GetFunction(Nan::New<FunctionTemplate>(CellAtLocationAndLevel)).ToLocalChecked());
   Nan::Set(target, Nan::New("GetClosestLevel").ToLocalChecked(),
     Nan::GetFunction(Nan::New<FunctionTemplate>(GetClosestLevel)).ToLocalChecked());
+  Nan::Set(target, Nan::New("SearchRanges").ToLocalChecked(),
+    Nan::GetFunction(Nan::New<FunctionTemplate>(SearchRanges)).ToLocalChecked());
 
   // Passing target down to the next NAN_MODULE_INIT
   MyObject::Init(target);

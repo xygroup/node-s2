@@ -107,4 +107,32 @@ describe('native extension', function() {
     assert(false)
   })
 
+  it("should export a function that calculates the cell ranges to search for a given lat/long, distance, and min/max level combination", function() {
+    var los_angeles = { lat: 34.0522, long: 118.2437 }
+    var min_level = nativeExtension.GetClosestLevel(100000)
+    var max_level = nativeExtension.GetClosestLevel(1000)
+    // console.log('min_level', min_level)
+    // console.log('max_level', max_level)
+    var distance = 5000
+    var ranges = nativeExtension.SearchRanges(los_angeles.lat, los_angeles.long, distance, min_level, max_level)
+    // console.log(ranges.length)
+    // console.log(ranges)
+    assert(Array.isArray(ranges))
+    assert(ranges.length <= 40)
+    ranges.forEach(function(cell) {
+      assert(Buffer.isBuffer(cell))
+      assert(cell.length === 8)
+    })
+  });
+
+  it("should throw when calling SearchRanges with missing arguments", function() {
+    try {
+      nativeExtension.SearchRanges()
+    } catch (e) {
+      assert(true)
+      return
+    }
+    assert(false)
+  })
+
 });
